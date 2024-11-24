@@ -48,7 +48,18 @@ int des_make_subkeys(const unsigned char key[8], unsigned char subKeys[16][6]) {
 
 uint32_t feistel(uint32_t right, uint64_t subKey) {
     // 扩展置换 E
-    uint64_t expanded = permute((uint64_t)right << 32, 64, E, 48);
+    uint64_t expanded = 0;
+    
+    uint8_t block0 = (right >> 24) & 0xFF;
+    uint8_t block1 = (right >> 16) & 0xFF;
+    uint8_t block2 = (right >> 8) & 0xFF;
+    uint8_t block3 = right & 0xFF;
+    
+    // 使用查找表对每个 block 查表并合并结果
+    expanded |= E_TABLE[0][block0];
+    expanded |= E_TABLE[1][block1];
+    expanded |= E_TABLE[2][block2];
+    expanded |= E_TABLE[3][block3];
 
     // 与子密钥进行异或
     uint64_t xor_result = expanded ^ subKey;
@@ -61,7 +72,6 @@ uint32_t feistel(uint32_t right, uint64_t subKey) {
 
     return result;
 }
-
 
 void des_encrypt_block(const unsigned char *input, unsigned char subKeys[16][6], unsigned char *output) {
     // 将输入字节转换为 64 位块
