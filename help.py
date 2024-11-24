@@ -60,7 +60,6 @@ P = [
     19, 13, 30, 6, 22, 11, 4, 25
 ]
 
-
 def sbox_p_table(sbox, p):
     """生成单个 S-Box 和 P 置换的查找表"""
     table = []
@@ -72,12 +71,11 @@ def sbox_p_table(sbox, p):
         # S-Box 替换
         sbox_value = sbox[row][col]
 
-        # P 置换
+        # 将 S-Box 输出的 4 位放入正确的位置
         p_value = 0
-        for j in range(4):
-            bit = (sbox_value >> (3 - j)) & 1
-            p_value |= bit << (32 - p[4 * (i % 8) + j])
-
+        for bit_index in range(4):
+            bit = (sbox_value >> (3 - bit_index)) & 1
+            p_value |= bit << (32 - p[bit_index + 4 * (i % 8)])
         table.append(p_value)
     return table
 

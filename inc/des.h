@@ -43,6 +43,15 @@ extern "C" {
 
 #endif // DES_H
 
+// Helper function to split a 64-bit block into two 32-bit halves
+#define SPLIT_BLOCK(block, left, right) \
+    left = (block >> 32) & 0xFFFFFFFF; \
+    right = block & 0xFFFFFFFF;
+
+// Helper function to combine two 32-bit halves into a 64-bit block
+#define COMBINE_BLOCK(left, right) (((uint64_t)(left) << 32) | (uint64_t)(right))
+
+
 // Tables used for DES key scheduling and encryption/decryption
 static const int PC1[56] = {
     57, 49, 41, 33, 25, 17,  9, 
@@ -188,6 +197,7 @@ static const uint32_t S_P_COMBINED[8][64] = {
     },
 };
 
+
 // P permutation table (used in the Feistel function)
 static const int P[32] = {
     16,  7, 20, 21,
@@ -200,7 +210,7 @@ static const int P[32] = {
     22, 11,  4, 25
 };
 
-// Helper function: Permutation optimized for 64-bit input
+// Permutation optimized for 64-bit input
 static uint64_t permute_64(uint64_t input, const int *table, int n) {
     uint64_t output = 0;
 
@@ -214,8 +224,19 @@ static uint64_t permute_64(uint64_t input, const int *table, int n) {
     return output;
 }
 
+static uint64_t permute(uint64_t input, int input_size, const int *table, int n) {
+    uint64_t output = 0;
 
-// Helper function: Left rotate
+    for (int i = 0; i < n; i++) {
+        int from = table[i] - 1; // 表中的位置从 1 开始
+        uint64_t bit = (input >> (input_size - from - 1)) & 1ULL;
+        output |= bit << (n - i - 1);
+    }
+
+    return output;
+}
+
+// Left rotate
 static void rotate_left(unsigned char *key, int n, int bits) {
     unsigned char temp = 0;
     for (int i = 0; i < bits; i++) {
