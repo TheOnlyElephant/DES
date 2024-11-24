@@ -2,8 +2,8 @@
 #include "../inc/benchmark.h"
 
 #define BENCHS 10
-// #define ROUNDS 10000
-#define ROUNDS 1
+#define ROUNDS 10000
+// #define ROUNDS 1
 
 // Print bytes in hexadecimal format
 void print_bytes(const unsigned char *data, size_t size)

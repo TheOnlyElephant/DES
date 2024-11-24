@@ -10,7 +10,7 @@ int des_make_subkeys(const unsigned char key[8], unsigned char subKeys[16][6]) {
     }
 
     // 应用 PC1 置换，将 64 位密钥压缩到 56 位
-    uint64_t permuted_key = permute_64(key64, PC1, 56);
+    uint64_t permuted_key = permute(key64, 64, PC1, 56);
 
     // 分离左 28 位和右 28 位
     uint32_t left = (permuted_key >> 28) & 0xFFFFFFF;  // 取高 28 位
@@ -43,34 +43,18 @@ int des_make_subkeys(const unsigned char key[8], unsigned char subKeys[16][6]) {
     //     printf("\n");
     // }
 
-    return 0; // 返回成功
+    return 0;
 }
 
-// 将子密钥字节数组转换为 48 位整数
-uint64_t bytes_to_uint48(const unsigned char* subKey) {
-    uint64_t result = 0;
-    for (int i = 0; i < 6; i++) {
-        result |= (uint64_t)subKey[i] << (40 - 8 * i);
-    }
-    return result;
-}
-
-uint32_t feistel(uint32_t right, const unsigned char* subKey) {
+uint32_t feistel(uint32_t right, uint64_t subKey) {
     // 扩展置换 E
     uint64_t expanded = permute((uint64_t)right << 32, 64, E, 48);
 
-    // 与子密钥异或
-    uint64_t xor_result = expanded ^ bytes_to_uint48(subKey);
+    // 与子密钥进行异或
+    uint64_t xor_result = expanded ^ subKey;
 
     // S 盒替换
-    uint32_t sbox_output = 0;
-    for (int i = 0; i < 8; i++) {
-        uint8_t six_bits = (xor_result >> (42 - 6 * i)) & 0x3F;
-        uint8_t row = ((six_bits & 0x20) >> 4) | (six_bits & 0x01);
-        uint8_t col = (six_bits >> 1) & 0x0F;
-        uint8_t sbox_value = S_BOXES[i][row][col];
-        sbox_output |= (uint32_t)sbox_value << (28 - 4 * i);
-    }
+    uint32_t sbox_output = S_BOX(xor_result);
 
     // P 置换
     uint32_t result = (uint32_t)permute(sbox_output, 32, P, 32);
@@ -79,7 +63,6 @@ uint32_t feistel(uint32_t right, const unsigned char* subKey) {
 }
 
 
-// DES 加密函数
 void des_encrypt_block(const unsigned char *input, unsigned char subKeys[16][6], unsigned char *output) {
     // 将输入字节转换为 64 位块
     uint64_t block = 0;
@@ -97,7 +80,8 @@ void des_encrypt_block(const unsigned char *input, unsigned char subKeys[16][6],
     // 16 轮迭代
     for (int i = 0; i < 16; i++) {
         uint32_t temp = right;
-        uint32_t feistel_result = feistel(right, subKeys[i]);
+        uint64_t subKey = bytes_to_uint48(subKeys[i]);
+        uint32_t feistel_result = feistel(right, subKey);
         right = left ^ feistel_result;
         left = temp;
     }
@@ -108,13 +92,13 @@ void des_encrypt_block(const unsigned char *input, unsigned char subKeys[16][6],
     // 逆初始置换
     uint64_t final_output = permute(preoutput, 64, IP_INV, 64);
 
-    // 输出结果转换为字节
+    // 把输出的结果转换为字节
     for (int i = 0; i < 8; i++) {
         output[i] = (final_output >> (56 - 8 * i)) & 0xFF;
     }
 }
 
-// DES 解密函数
+
 void des_decrypt_block(const unsigned char *input, unsigned char subKeys[16][6], unsigned char *output) {
     // 将输入字节转换为 64 位块
     uint64_t block = 0;
@@ -132,7 +116,8 @@ void des_decrypt_block(const unsigned char *input, unsigned char subKeys[16][6],
     // 16 轮迭代（子密钥顺序相反）
     for (int i = 15; i >= 0; i--) {
         uint32_t temp = right;
-        uint32_t feistel_result = feistel(right, subKeys[i]);
+        uint64_t subKey = bytes_to_uint48(subKeys[i]);
+        uint32_t feistel_result = feistel(right, subKey);
         right = left ^ feistel_result;
         left = temp;
     }
@@ -143,7 +128,7 @@ void des_decrypt_block(const unsigned char *input, unsigned char subKeys[16][6],
     // 逆初始置换
     uint64_t final_output = permute(preoutput, 64, IP_INV, 64);
 
-    // 输出结果转换为字节
+    // 把输出的结果转换为字节
     for (int i = 0; i < 8; i++) {
         output[i] = (final_output >> (56 - 8 * i)) & 0xFF;
     }
