@@ -46,33 +46,38 @@ int des_make_subkeys(const unsigned char key[8], unsigned char subKeys[16][6]) {
     return 0; // 返回成功
 }
 
-// Feistel 函数
-static uint32_t feistel(uint32_t right, const unsigned char *subKey) {
-    uint64_t expanded = 0;
-
-    // 第一步：扩展置换，将 32 位扩展到 48 位
-    expanded = permute((uint64_t)right << 32, 64, E, 48);
-    // printf("Expanded: %012llX\n", expanded);
-
-    // 第二步：与子密钥异或
+// 将子密钥字节数组转换为 48 位整数
+uint64_t bytes_to_uint48(const unsigned char* subKey) {
+    uint64_t result = 0;
     for (int i = 0; i < 6; i++) {
-        expanded ^= ((uint64_t)subKey[i] << (40 - 8 * i));
-        // printf("After XOR: %012llX\n", expanded);
+        result |= (uint64_t)subKey[i] << (40 - 8 * i);
     }
-
-    // 第三步：使用 S_P_COMBINED 查找表
-    uint32_t substituted = 0;
-    for (int i = 0; i < 8; i++) {
-        // 提取每 6 位作为索引
-        int index = (expanded >> (42 - 6 * i)) & 0x3F;
-        // 从查找表中获取对应的值
-        substituted |= S_P_COMBINED[i][index] << (28 - 4 * i);
-    }
-    // printf("Substituted: %08X\n", substituted);
-
-    // 第四步：返回结果，P 置换已包含在查找表中
-    return substituted;
+    return result;
 }
+
+uint32_t feistel(uint32_t right, const unsigned char* subKey) {
+    // 扩展置换 E
+    uint64_t expanded = permute((uint64_t)right << 32, 64, E, 48);
+
+    // 与子密钥异或
+    uint64_t xor_result = expanded ^ bytes_to_uint48(subKey);
+
+    // S 盒替换
+    uint32_t sbox_output = 0;
+    for (int i = 0; i < 8; i++) {
+        uint8_t six_bits = (xor_result >> (42 - 6 * i)) & 0x3F;
+        uint8_t row = ((six_bits & 0x20) >> 4) | (six_bits & 0x01);
+        uint8_t col = (six_bits >> 1) & 0x0F;
+        uint8_t sbox_value = S_BOXES[i][row][col];
+        sbox_output |= (uint32_t)sbox_value << (28 - 4 * i);
+    }
+
+    // P 置换
+    uint32_t result = (uint32_t)permute(sbox_output, 32, P, 32);
+
+    return result;
+}
+
 
 // DES 加密函数
 void des_encrypt_block(const unsigned char *input, unsigned char subKeys[16][6], unsigned char *output) {
