@@ -1,0 +1,24 @@
+运行环境
+WSL2
+Ubuntu20.04
+
+
+
+运行结果
+elephant@Zhouyeying ~/c/c/AES> ./build/aes
+>> Performing correctness test...
+Original plaintext: 00 01 00 01 01 A1 98 AF DA 78 17 34 86 15 35 66 
+Correct ciphertext: 6C DD 59 6B 8F 56 42 CB D2 3B 47 98 1A 65 42 2A 
+Encrypted ciphertext: 6C DD 59 6B 8F 56 42 CB D2 3B 47 98 1A 65 42 2A 
+Decrypted plaintext: 00 01 00 01 01 A1 98 AF DA 78 17 34 86 15 35 66 
+>> Correctness test passed.
+
+>> Performing performance test...
+BLOCK_CIPHER_THROUGHPUT: AES encryption
+Execute time: 0.055402 s
+Throughpt: 2.151697 Gbps
+
+BLOCK_CIPHER_THROUGHPUT: AES decryption
+Execute time: 0.052603 s
+Throughpt: 2.266221 Gbps
+
