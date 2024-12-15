@@ -1,0 +1,57 @@
+运行说明：
+1. 运行助教提供的接口测试方法
+	make all
+	./build/sm4
+2. 运行CBC模式
+	在src/test_sm4.c文件中的main函数里将测试CBC模式性能的代码取消注释，重新编译运行
+	make all
+	./build/sm4
+
+环境：
+	WSL2
+	Ubuntu20.04
+
+测试结果：
+>> Performing correctness test...
+Original plaintext: 01 23 45 67 89 AB CD EF FE DC BA 98 76 54 32 10 
+Correct ciphertext: 68 1E DF 34 D2 06 96 5E 86 B3 E9 4F 53 6E 42 46 
+Encrypted ciphertext: 68 1E DF 34 D2 06 96 5E 86 B3 E9 4F 53 6E 42 46 
+Decrypted plaintext: 01 23 45 67 89 AB CD EF FE DC BA 98 76 54 32 10 
+>> Correctness test passed.
+
+>> Performing performance test...
+BLOCK_CIPHER_THROUGHPUT: SM4 encryption
+Execute time: 0.001467 s
+Throughpt: 832.365499 Mbps
+
+BLOCK_CIPHER_THROUGHPUT: SM4 decryption
+Execute time: 0.001466 s
+Throughpt: 832.563627 Mbps
+
+>> Performing CBC performance test...
+Testing 64B...
+BLOCK_CIPHER_THROUGHPUT: SM4 CBC Encryption
+Execute time: 0.007405 s
+Throughpt: 659.430769 Mbps
+
+BLOCK_CIPHER_THROUGHPUT: SM4 CBC Decryption
+Execute time: 0.007229 s
+Throughpt: 675.445420 Mbps
+
+Testing 2KB...
+BLOCK_CIPHER_THROUGHPUT: SM4 CBC Encryption
+Execute time: 0.187885 s
+Throughpt: 831.624879 Mbps
+
+BLOCK_CIPHER_THROUGHPUT: SM4 CBC Decryption
+Execute time: 0.160338 s
+Throughpt: 974.501818 Mbps
+
+Testing 10MB...
+BLOCK_CIPHER_THROUGHPUT: SM4 CBC Encryption
+Execute time: 0.866377 s
+Throughpt: 923.385372 Mbps
+
+BLOCK_CIPHER_THROUGHPUT: SM4 CBC Decryption
+Execute time: 0.820640 s
+Throughpt: 974.848465 Mbps
